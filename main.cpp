@@ -61,12 +61,16 @@ int main()
   std::for_each(main_array.begin(), main_array.end(), [&gen](auto &iter)
                 { iter = gen(); }); // Fill each number by generator(gen)
 
-  std::thread(FlagThread, 1).join(); // Start thread 1
-  std::thread(FlagThread, 2).join(); // Start thread 2
+  std::thread thread1 = std::thread(FlagThread, 1); // Start thread 1
+  std::thread thread2 = std::thread(FlagThread, 2); // Start thread 2
 
   while(iter < main_array.size()); // Wait until threads finish counting
 
   std::cout << "Sum: " << prime_sum << std::endl; // Output sum
+
+  // Let thread finish properly
+  thread1.join();
+  thread2.join();
 
   return 0;
 }
