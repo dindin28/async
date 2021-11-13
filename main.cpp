@@ -3,9 +3,10 @@
 #include <iostream>
 #include <random>
 #include <algorithm>
+#include <thread>
 
 #define TYPE u_short
-#define SIZE 1000000
+#define SIZE 10
 
 template<class T>
 bool IsPrime(T num)
@@ -27,8 +28,25 @@ bool IsPrime(T num)
 }
 
 std::array<TYPE, SIZE> main_array;
+unsigned long long prime_sum = 0;
 
-std::vector<TYPE> prime_vector;
+bool turn = true;
+int i = 0;
+
+void Thread(bool control_boolean)
+{
+  while(i < main_array.size() - 1)
+  {
+    while(turn != control_boolean && i < main_array.size()) {}
+    std::cout << "Im in " << ((control_boolean) ? ("true ") : ("false ")) << "controlled thread with i = " << i << std::endl;
+    if (IsPrime(main_array.at(i)))
+    {
+      prime_sum = main_array.at(i);
+    }
+    ++i;
+    turn = !control_boolean;
+  }
+}
 
 int main()
 {
@@ -38,21 +56,14 @@ int main()
   std::for_each(main_array.begin(), main_array.end(), [&gen](auto &iter)
                 { iter = gen(); });
 
-  for (auto iter : main_array)
-  {
-    if (IsPrime(iter))
-    {
-      prime_vector.push_back(iter);
-    }
-  }
+  std::thread thread1 = std::thread(Thread, true);
+  std::thread thread2 = std::thread(Thread, false);
 
-  // Output vector
-  unsigned long long prime_sum = std::accumulate(prime_vector.begin(), prime_vector.end(), 0);
-  /*
-  std::for_each(prime_vector.begin(), prime_vector.end(), [](auto iter)
-                { std::cout << iter << " "; });
-                std::cout << std::endl
-  */
+  thread1.join();
+  thread2.join();
+
+  while(i < main_array.size());
+
   std::cout << "Sum: " << prime_sum << std::endl;
 
   return 0;
