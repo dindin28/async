@@ -1,14 +1,13 @@
+#include <array>     // std::array
+#include <iostream>  // std::cout
+#include <random>    // std::random_device, std::mt19937_64
+#include <algorithm> // std::for_each
+#include <thread>    // std::thread
 
-#include <vector>
-#include <array>
-#include <iostream>
-#include <random>
-#include <algorithm>
-#include <thread>
+#define TYPE u_short // data type on compile-time
+#define SIZE 1000    // size of main array
 
-#define TYPE u_short
-#define SIZE 1000
-
+// Templated function to check if number is prime
 template<class T>
 bool IsPrime(T num)
 {
@@ -28,23 +27,22 @@ bool IsPrime(T num)
   return is_prime;
 }
 
-std::array<TYPE, SIZE> main_array;
-unsigned long long prime_sum = 0;
+std::array<TYPE, SIZE> main_array; // Main array, that filling by random numbers
+unsigned long long prime_sum = 0;  // Sums up all prime numbers
+int iter = 0;                      // Iterator for main array
 
-int i = 0;
-
-void Thread()
+void NoSyncThread()
 {
-  while(i < main_array.size())
+  while(iter < main_array.size())
   {
-    std::cout << "i = " << i << std::endl;
-    if(i < main_array.size())
+    std::cout << "iter = " << iter << std::endl;
+    if(iter < main_array.size())
     {
-      if (IsPrime(main_array.at(i)))
+      if (IsPrime(main_array.at(iter)))
       {
-        prime_sum = main_array.at(i);
+        prime_sum = main_array.at(iter);
       }
-      ++i;
+      ++iter;
     }
   }
 }
@@ -55,17 +53,18 @@ int main()
   std::random_device rd;     // Instance of an engine
   std::mt19937_64 gen(rd()); // Generates random integers
   std::for_each(main_array.begin(), main_array.end(), [&gen](auto &iter)
-                { iter = gen(); });
+                { iter = gen(); }); // Fill each number by generator(gen)
 
-  std::thread thread1 = std::thread(Thread);
-  std::thread thread2 = std::thread(Thread);
+  std::thread thread1 = std::thread(NoSyncThread); // Start thread 1
+  std::thread thread2 = std::thread(NoSyncThread); // Start thread 2
 
+  while(iter < main_array.size()); // Wait until threads finish counting
+
+  std::cout << "Sum: " << prime_sum << std::endl; // Output sum
+
+  // Let thread finish properly
   thread1.join();
   thread2.join();
-
-  while(i < main_array.size());
-
-  std::cout << "Sum: " << prime_sum << std::endl;
 
   return 0;
 }
