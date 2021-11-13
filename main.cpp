@@ -35,16 +35,18 @@ int i = 0;
 
 void Thread(bool control_boolean)
 {
-  while(i < main_array.size() - 1)
+  while(i < main_array.size())
   {
-    while(turn != control_boolean && i < main_array.size()) {}
+    while(turn != control_boolean) {}
     std::cout << "Im in " << ((control_boolean) ? ("true ") : ("false ")) << "controlled thread with i = " << i << std::endl;
-    if (IsPrime(main_array.at(i)))
-    {
-      prime_sum = main_array.at(i);
+    if(i < main_array.size()){
+      if (IsPrime(main_array.at(i)))
+      {
+        prime_sum = main_array.at(i);
+      }
+      ++i;
+      turn = !control_boolean;
     }
-    ++i;
-    turn = !control_boolean;
   }
 }
 
