@@ -37,7 +37,7 @@ int iter = 0;                      // Iterator for main array
 int turn;
 bool interested[THREAD_COUNT]{};
 
-void LockThread(int process)
+void PetersonLock(int process)
 {
   int other = 1 - process;
   interested[process] = true;
@@ -45,17 +45,17 @@ void LockThread(int process)
   while(turn == process && interested[other] == true);
 }
 
-void UnlockThread(int process)
+void PetersonUnlock(int process)
 {
   interested[process] = false;
 }
 
 // Function in thread
-void FlagThread(int thread_number)
+void PetersonThread(int thread_number)
 {
   while(iter < main_array.size())
   {
-    LockThread(thread_number);
+    PetersonLock(thread_number);
     std::cout << "Thread#" << thread_number << " locked thread_busy, iter = " << iter << std::endl;
     if(iter < main_array.size())
     {
@@ -65,7 +65,7 @@ void FlagThread(int thread_number)
       }
       ++iter;
     }
-    UnlockThread(thread_number);
+    PetersonUnlock(thread_number);
   }
 }
 
@@ -77,8 +77,8 @@ int main()
   std::for_each(main_array.begin(), main_array.end(), [&gen](auto &iter)
                 { iter = gen(); }); // Fill each number by generator(gen)
 
-  std::thread thread1 = std::thread(FlagThread, 0); // Start thread 1
-  std::thread thread2 = std::thread(FlagThread, 1); // Start thread 2
+  std::thread thread1 = std::thread(PetersonThread, 0); // Start thread 0
+  std::thread thread2 = std::thread(PetersonThread, 1); // Start thread 1
 
   while(iter < main_array.size()); // Wait until threads finish counting
 
