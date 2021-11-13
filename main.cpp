@@ -1,12 +1,15 @@
-#include <vector>
-#include <array>
-#include <iostream>
-#include <random>
-#include <algorithm>
+#include <array>     // std::array
+#include <iostream>  // std::cout
+#include <random>    // std::random_device, std::mt19937_64
+#include <algorithm> // std::for_each
+#include <thread>    // std::thread
 
-#define TYPE u_short
-#define SIZE 1000000
+#define TYPE u_short // data type on compile-time
+#define SIZE 1000    // size of main array
 
+#define THREAD_COUNT 2
+
+// Templated function to check if number is prime
 template<class T>
 bool IsPrime(T num)
 {
@@ -26,9 +29,45 @@ bool IsPrime(T num)
   return is_prime;
 }
 
-std::array<TYPE, SIZE> main_array;
+// Global variables
+std::array<TYPE, SIZE> main_array; // Main array, that filling by random numbers
+unsigned long long prime_sum = 0;  // Sums up all prime numbers
+int iter = 0;                      // Iterator for main array
 
-std::vector<TYPE> prime_vector;
+int turn;
+bool interested[THREAD_COUNT]{};
+
+void LockThread(int process)
+{
+  int other = 1 - process;
+  interested[process] = true;
+  turn = process;
+  while(turn == process && interested[other] == true);
+}
+
+void UnlockThread(int process)
+{
+  interested[process] = false;
+}
+
+// Function in thread
+void FlagThread(int thread_number)
+{
+  while(iter < main_array.size())
+  {
+    LockThread(thread_number);
+    std::cout << "Thread#" << thread_number << " locked thread_busy, iter = " << iter << std::endl;
+    if(iter < main_array.size())
+    {
+      if (IsPrime(main_array.at(iter)))
+      {
+        prime_sum = main_array.at(iter);
+      }
+      ++iter;
+    }
+    UnlockThread(thread_number);
+  }
+}
 
 int main()
 {
@@ -36,24 +75,18 @@ int main()
   std::random_device rd;     // Instance of an engine
   std::mt19937_64 gen(rd()); // Generates random integers
   std::for_each(main_array.begin(), main_array.end(), [&gen](auto &iter)
-                { iter = gen(); });
+                { iter = gen(); }); // Fill each number by generator(gen)
 
-  for (auto iter : main_array)
-  {
-    if (IsPrime(iter))
-    {
-      prime_vector.push_back(iter);
-    }
-  }
+  std::thread thread1 = std::thread(FlagThread, 0); // Start thread 1
+  std::thread thread2 = std::thread(FlagThread, 1); // Start thread 2
 
-  // Output vector
-  unsigned long long prime_sum = std::accumulate(prime_vector.begin(), prime_vector.end(), 0);
-  /*
-  std::for_each(prime_vector.begin(), prime_vector.end(), [](auto iter)
-                { std::cout << iter << " "; });
-                std::cout << std::endl
-  */
-  std::cout << "Sum: " << prime_sum << std::endl;
+  while(iter < main_array.size()); // Wait until threads finish counting
+
+  std::cout << "Sum: " << prime_sum << std::endl; // Output sum
+
+  // Let thread finish properly
+  thread1.join();
+  thread2.join();
 
   return 0;
 }
