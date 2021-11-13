@@ -1,13 +1,13 @@
-#include <vector>
-#include <array>
-#include <iostream>
-#include <random>
-#include <algorithm>
-#include <thread>
+#include <array>     // std::array
+#include <iostream>  // std::cout
+#include <random>    // std::random_device, std::mt19937_64
+#include <algorithm> // std::for_each
+#include <thread>    // std::thread
 
-#define TYPE u_short
-#define SIZE 10
+#define TYPE u_short // Define common data type
+#define SIZE 10      // Size of main array
 
+// Templated function to check if number is prime
 template<class T>
 bool IsPrime(T num)
 {
@@ -27,24 +27,24 @@ bool IsPrime(T num)
   return is_prime;
 }
 
-std::array<TYPE, SIZE> main_array;
-unsigned long long prime_sum = 0;
+std::array<TYPE, SIZE> main_array; // Main array, that filling by random numbers
+unsigned long long prime_sum = 0;  // Sums up all prime numbers
+bool turn = true;                  // Turn swither for thread
+int iter = 0;                      // Iterator for main array
 
-bool turn = true;
-int i = 0;
-
-void Thread(bool control_boolean)
+void StrictThread(bool control_boolean)
 {
-  while(i < main_array.size())
+  while(iter < main_array.size())
   {
     while(turn != control_boolean) {}
-    std::cout << "Im in " << ((control_boolean) ? ("true ") : ("false ")) << "controlled thread with i = " << i << std::endl;
-    if(i < main_array.size()){
-      if (IsPrime(main_array.at(i)))
+    std::cout << "Im in " << ((control_boolean) ? ("true ") : ("false "))
+              << "controlled thread with i = " << iter << std::endl;
+    if(iter < main_array.size()){
+      if (IsPrime(main_array.at(iter)))
       {
-        prime_sum = main_array.at(i);
+        prime_sum = main_array.at(iter);
       }
-      ++i;
+      ++iter;
       turn = !control_boolean;
     }
   }
@@ -56,17 +56,18 @@ int main()
   std::random_device rd;     // Instance of an engine
   std::mt19937_64 gen(rd()); // Generates random integers
   std::for_each(main_array.begin(), main_array.end(), [&gen](auto &iter)
-                { iter = gen(); });
+                { iter = gen(); }); // Fill each number by generator(gen)
 
-  std::thread thread1 = std::thread(Thread, true);
-  std::thread thread2 = std::thread(Thread, false);
+  std::thread thread1 = std::thread(StrictThread, true);  // Start thread 1
+  std::thread thread2 = std::thread(StrictThread, false); // Start thread 2
 
+  // Let threads finish properly
   thread1.join();
   thread2.join();
 
-  while(i < main_array.size());
+  while(iter < main_array.size()); // Wait until threads finish counting
 
-  std::cout << "Sum: " << prime_sum << std::endl;
+  std::cout << "Sum: " << prime_sum << std::endl; // Output sum
 
   return 0;
 }
